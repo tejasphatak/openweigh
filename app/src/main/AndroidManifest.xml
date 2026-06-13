@@ -28,6 +28,16 @@
     <!-- Network: Drive backup only (app is fully functional offline) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Health Connect write permissions. These MUST be declared for the in-app permission
+         request (HealthConnectManager.permissions) to surface anything; without them the Health
+         Connect screen offers nothing to grant. One per record type the app writes. -->
+    <uses-permission android:name="android.permission.health.WRITE_WEIGHT" />
+    <uses-permission android:name="android.permission.health.WRITE_BODY_FAT" />
+    <uses-permission android:name="android.permission.health.WRITE_LEAN_BODY_MASS" />
+    <uses-permission android:name="android.permission.health.WRITE_BODY_WATER_MASS" />
+    <uses-permission android:name="android.permission.health.WRITE_BONE_MASS" />
+    <uses-permission android:name="android.permission.health.WRITE_BASAL_METABOLIC_RATE" />
+
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
