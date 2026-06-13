@@ -44,14 +44,21 @@ import io.github.openweigh.ui.common.Formatting
  * History screen: a scrollable list of measurements grouped into day [Card]s, topped by a
  * weight/body-fat trend chart rendered with Compose [Canvas]. Tapping a row navigates to detail.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
     onReadingClick: (String) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    HistoryContent(state = state, onReadingClick = onReadingClick)
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun HistoryContent(
+    state: HistoryUiState,
+    onReadingClick: (String) -> Unit = {},
+) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("History") }) },
     ) { padding ->

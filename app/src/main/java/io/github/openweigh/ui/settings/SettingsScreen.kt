@@ -159,7 +159,7 @@ fun SettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProfileCard(
+internal fun ProfileCard(
     state: SettingsUiState,
     onHeightChange: (String) -> Unit,
     onSexChange: (Sex) -> Unit,
@@ -258,7 +258,7 @@ private fun ScaleCard(onOpenOnboarding: () -> Unit) {
 // --- Help & feedback -----------------------------------------------------------------------------
 
 @Composable
-private fun SupportCard(onReportProblem: () -> Unit) {
+internal fun SupportCard(onReportProblem: () -> Unit) {
     SectionCard(icon = { Icon(Icons.Outlined.BugReport, null) }, title = "Help & feedback") {
         Text(
             "Something not working? Generate a diagnostic report (app/device info + recent logs, no " +
@@ -276,7 +276,7 @@ private fun SupportCard(onReportProblem: () -> Unit) {
 // --- Health Connect ------------------------------------------------------------------------------
 
 @Composable
-private fun HealthConnectCard(
+internal fun HealthConnectCard(
     state: SettingsUiState,
     onConnect: () -> Unit,
     onInstall: () -> Unit,
@@ -330,7 +330,7 @@ private fun HealthConnectCard(
 // --- Google / Drive ------------------------------------------------------------------------------
 
 @Composable
-private fun GoogleDriveCard(
+internal fun GoogleDriveCard(
     state: SettingsUiState,
     onSignIn: () -> Unit,
     onSignOut: () -> Unit,

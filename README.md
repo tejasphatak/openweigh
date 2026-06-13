@@ -10,6 +10,19 @@ Google Drive — there is no OpenWeigh server, ever.
 
 Licensed under the **GNU General Public License v3.0** (see [`LICENSE`](LICENSE)).
 
+## Screenshots
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_onboarding.png" width="18%" alt="Onboarding" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_measure.png" width="18%" alt="Live weigh-in" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3_detail.png" width="18%" alt="Measurement detail" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_history.png" width="18%" alt="History &amp; trend" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5_settings.png" width="18%" alt="Settings" />
+</p>
+
+<sub>Generated from the real Compose UI with Roborazzi — see
+[`fastlane/README.md`](fastlane/README.md) to regenerate.</sub>
+
 ## Features
 
 - **BLE scale support** via a pluggable protocol layer. Ships with the two standard Bluetooth
