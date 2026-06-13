@@ -1,0 +1,10 @@
+v0.1.0 — Initial release.
+
+* Connect to BLE weight and body-composition scales and record measurements.
+* Offline-first local storage of your full measurement history.
+* Optional sync to Android Health Connect.
+* Material 3 interface built with Jetpack Compose.
+* No account, no tracking, no ads.
+
+This is the GMS-free foss build for F-Droid: Google Drive backup and Sign in
+with Google are not included.

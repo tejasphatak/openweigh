@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Base application theme. The real Material 3 styling is applied in Compose
+        (see io.github.openweigh.ui.theme.OpenWeighTheme). This XML theme only governs
+        the brief window background before Compose draws, and the system bars. Parent is a
+        framework theme so no Material Components (View) dependency is required.
+    -->
+    <style name="Theme.OpenWeigh" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

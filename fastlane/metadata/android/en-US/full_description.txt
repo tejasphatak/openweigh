@@ -1,0 +1,46 @@
+OpenWeigh turns your Bluetooth Low Energy (BLE) smart scale into a private,
+offline-first health tracker. Step on the scale, and your weight and body-
+composition metrics are captured straight to your phone — no account, no
+sign-up, no tracking, no ads.
+
+Everything stays on your device. Measurements are stored locally in an on-
+device database, and OpenWeigh works fully offline. There are no analytics
+SDKs, no telemetry, and no third-party data collection of any kind.
+
+== Features ==
+
+* Connect to BLE weight and body-composition scales and read measurements over
+  Bluetooth.
+* Track weight plus the body-composition metrics your scale reports (such as
+  body fat, muscle, water, and BMI, depending on the hardware).
+* Offline-first local storage — your full history lives on your device and is
+  always available, with or without a network connection.
+* Health Connect integration — sync your readings to Android Health Connect so
+  other health and fitness apps you trust can use them, with your permission.
+* Clean, modern Material 3 interface built with Jetpack Compose.
+* No account required. No tracking. No ads.
+
+== Backup ==
+
+OpenWeigh ships in two build flavors:
+
+* The standard flavor includes an optional Google Drive backup and Sign in with
+  Google, which depend on Google Play Services (GMS).
+* The F-Droid build is the GMS-free "foss" flavor. To keep it free of non-free
+  dependencies, the foss build does NOT include Google Drive backup or Sign in
+  with Google — those features are simply absent. Health Connect sync and full
+  offline local storage work exactly the same in both flavors.
+
+If you need cloud backup, you can still export and move your local data; the
+GMS-only Drive sync is the only feature missing from the F-Droid build.
+
+== Privacy ==
+
+OpenWeigh is built privacy-first. Your measurements never leave your phone
+unless you explicitly choose to share them with Health Connect. There are no
+hidden network calls, no accounts, and no tracking.
+
+== License ==
+
+OpenWeigh is free and open-source software, released under the GNU General
+Public License v3.0 (GPLv3). You are free to use, study, share, and improve it.
