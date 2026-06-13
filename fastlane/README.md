@@ -40,13 +40,13 @@ build metadata should target the `foss` flavor. Sketch of the relevant fields:
 Categories:
   - Sports & Health
 License: GPL-3.0-or-later
-SourceCode: https://github.com/openweigh/openweigh
-IssueTracker: https://github.com/openweigh/openweigh/issues
+SourceCode: https://github.com/tejasphatak/openweigh
+IssueTracker: https://github.com/tejasphatak/openweigh/issues
 
 AutoName: OpenWeigh
 
 RepoType: git
-Repo: https://github.com/openweigh/openweigh
+Repo: https://github.com/tejasphatak/openweigh
 
 Builds:
   - versionName: 0.1.0

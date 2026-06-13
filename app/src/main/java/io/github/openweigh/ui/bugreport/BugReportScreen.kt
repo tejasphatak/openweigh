@@ -44,7 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * Where to file issues. Update this to your fork's repository before publishing; the primary
  * "Share" action works regardless (it just opens the system share sheet with the report text).
  */
-private const val ISSUES_URL = "https://github.com/openweigh/openweigh/issues/new"
+private const val ISSUES_URL = "https://github.com/tejasphatak/openweigh/issues/new"
 
 /**
  * "Report a problem" screen. Shows a privacy-reviewed diagnostic report the user can describe,
