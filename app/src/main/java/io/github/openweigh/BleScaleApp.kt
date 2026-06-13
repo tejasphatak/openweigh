@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import io.github.openweigh.diag.CrashReporter
+import io.github.openweigh.sync.BackupWorker
 import javax.inject.Inject
 
 /**
@@ -25,6 +26,9 @@ class BleScaleApp : Application(), Configuration.Provider {
         // Capture uncaught exceptions to private storage so the bug-report screen can surface the
         // last crash across restarts. No data leaves the device.
         CrashReporter.install(this)
+        // Durable, network-constrained fallback that backs the store up to Drive's appDataFolder.
+        // Idempotent (KEEP) and a no-op until the user enables/authorizes Drive backup.
+        BackupWorker.enqueuePeriodic(this)
     }
 
     override val workManagerConfiguration: Configuration

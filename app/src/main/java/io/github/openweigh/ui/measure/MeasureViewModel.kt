@@ -11,6 +11,7 @@ import io.github.openweigh.ble.model.Sex
 import io.github.openweigh.ble.model.UserProfile
 import io.github.openweigh.data.db.UserProfileDao
 import io.github.openweigh.data.repo.MeasurementRepository
+import io.github.openweigh.sync.SyncCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -45,6 +46,7 @@ class MeasureViewModel @Inject constructor(
     private val connection: ScaleConnection,
     private val repository: MeasurementRepository,
     private val profileDao: UserProfileDao,
+    private val syncCoordinator: SyncCoordinator,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MeasureUiState())
@@ -199,6 +201,8 @@ class MeasureViewModel @Inject constructor(
         recentWeights.clear()
         viewModelScope.launch {
             val measurement = repository.saveReading(reading)
+            // Best-effort: push to Health Connect now (if connected) and debounce a Drive backup.
+            syncCoordinator.onReadingSaved(measurement)
             _state.update {
                 it.copy(
                     phase = MeasurePhase.Saved,
