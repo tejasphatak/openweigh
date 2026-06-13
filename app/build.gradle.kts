@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -98,6 +99,13 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests {
+            // Required for Robolectric/Roborazzi to load Android resources & render Compose on the JVM.
+            isIncludeAndroidResources = true
+        }
+    }
+
     packaging {
         resources {
             // The Google API / HTTP-client jars each ship duplicate META-INF metadata that the
@@ -154,4 +162,24 @@ dependencies {
     // Unit tests (JVM-only, plain JUnit4 — runs via `./gradlew testPlayDebugUnitTest`)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
+
+    // Headless Compose screenshot generation (Roborazzi + Robolectric) — used to produce the
+    // F-Droid/Play store screenshots without a device/emulator.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.rule)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// Screenshot (Roborazzi) tests are slow and only used to (re)generate store images. Keep them out
+// of normal/CI unit-test runs; opt in with `-Pscreenshots` (e.g. recordRoborazziPlayDebug -Pscreenshots).
+tasks.withType<Test>().configureEach {
+    if (!project.hasProperty("screenshots")) {
+        exclude("**/screenshot/**")
+    }
 }

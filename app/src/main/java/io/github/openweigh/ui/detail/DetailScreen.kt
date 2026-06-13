@@ -152,7 +152,7 @@ fun DetailScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailContent(
+internal fun DetailContent(
     measurement: Measurement,
     state: DetailUiState,
     modifier: Modifier,

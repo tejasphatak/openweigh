@@ -196,7 +196,7 @@ private fun ConnectingContent(deviceName: String?) {
 }
 
 @Composable
-private fun LiveReadoutContent(
+internal fun LiveReadoutContent(
     reading: ScaleReading?,
     deviceName: String?,
     onSave: () -> Unit,

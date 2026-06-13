@@ -15,8 +15,21 @@ fastlane/metadata/android/en-US/
                           # (text only for now; image binaries added later)
 ```
 
-This is **text-only** metadata. Icons and screenshots will be added under
-`images/` later and are not committed yet (only a `.gitkeep` placeholder).
+## Screenshots
+
+`images/phoneScreenshots/` holds the listing screenshots. They are **generated from the real
+Compose UI** (no device/emulator) with [Roborazzi](https://github.com/takahirom/roborazzi) +
+Robolectric, so they can be regenerated deterministically:
+
+```bash
+./gradlew recordRoborazziPlayDebug -Pscreenshots   # renders to app/build/screenshots/*.png
+cp app/build/screenshots/[0-9]*_*.png fastlane/metadata/android/en-US/images/phoneScreenshots/
+```
+
+The capture test is `app/src/test/.../screenshot/FastlaneScreenshotTest.kt` (Pixel 5, 1080×2340).
+The `screenshot` package is excluded from normal/CI unit-test runs and only included with the
+`-Pscreenshots` flag, so it never slows or breaks CI.
+A branded `icon.png` and `featureGraphic.png` can be dropped into `images/` later.
 
 ## F-Droid build flavor: `foss`
 
