@@ -1,5 +1,8 @@
 # OpenWeigh
 
+[![Android CI](https://github.com/tejasphatak/openweigh/actions/workflows/build.yml/badge.svg)](https://github.com/tejasphatak/openweigh/actions/workflows/build.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 A free, open-source, **no-account** Android app for Bluetooth Low Energy (BLE) weight scales.
 Connect to your scale, read weight and body composition, store everything locally
 (offline-first), export to Android **Health Connect**, and optionally back up to **your own**
