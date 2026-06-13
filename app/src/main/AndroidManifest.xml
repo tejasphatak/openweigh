@@ -16,8 +16,13 @@
     <uses-permission
         android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
+    <!-- Pre-12 BLE scanning required location; declare both fine and coarse (lint requires the
+         pair) so a scan works on Android 11 and below. -->
     <uses-permission
         android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
         android:maxSdkVersion="30" />
 
     <!-- Network: Drive backup only (app is fully functional offline) -->
