@@ -1,5 +1,7 @@
 package io.github.openweigh.ui.detail
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -70,6 +73,32 @@ fun DetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmDelete by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Health Connect permission request launcher; on result, retry the export when granted.
+    val healthLauncher = rememberLauncherForActivityResult(viewModel.healthConnectContract()) { granted ->
+        viewModel.onHealthPermissionResult(granted)
+    }
+    LaunchedEffect(state.requestHealthPermissions) {
+        if (state.requestHealthPermissions) {
+            healthLauncher.launch(viewModel.healthConnectPermissions())
+            viewModel.consumeRequestHealthPermissions()
+        }
+    }
+    LaunchedEffect(state.openHealthSettings) {
+        if (state.openHealthSettings) {
+            viewModel.healthConnectSettingsIntent()?.let { intent ->
+                context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            viewModel.consumeOpenHealthSettings()
+        }
+    }
+    LaunchedEffect(state.launchInstall) {
+        if (state.launchInstall) {
+            context.startActivity(viewModel.healthConnectInstallIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            viewModel.consumeLaunchInstall()
+        }
+    }
 
     LaunchedEffect(id) { viewModel.load(id) }
 
