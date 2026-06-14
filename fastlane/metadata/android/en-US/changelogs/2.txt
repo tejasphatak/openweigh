@@ -1,0 +1,5 @@
+v0.1.1
+
+- Fix: Health Connect permissions now appear, so you can connect and export
+  weight and body-composition records. (The required android.permission.health.*
+  permissions were missing from the manifest in v0.1.0.)
