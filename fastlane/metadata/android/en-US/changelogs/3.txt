@@ -1,0 +1,7 @@
+v0.1.2
+
+- Device picker now filters to weight scales and named devices, hiding the
+  "unknown" Bluetooth clutter. A new "Show all devices" toggle reveals everything
+  if your scale isn't recognized from its advertisement.
+- Exporting to Health Connect now opens the permission screen (and Health Connect
+  settings) when access hasn't been granted yet, instead of just showing a message.
