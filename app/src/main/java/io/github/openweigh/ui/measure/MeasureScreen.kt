@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.MonitorWeight
 import androidx.compose.material3.Button
@@ -35,9 +36,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -144,6 +147,8 @@ fun MeasureScreen(
                 sheetState = sheetState,
                 scanning = state.isScanning,
                 devices = state.devices,
+                showAll = state.showAllDevices,
+                onShowAllChange = viewModel::setShowAllDevices,
                 onSelect = viewModel::connectTo,
                 onDismiss = viewModel::dismissPicker,
             )
@@ -314,9 +319,15 @@ private fun DevicePickerSheet(
     sheetState: androidx.compose.material3.SheetState,
     scanning: Boolean,
     devices: List<DiscoveredDevice>,
+    showAll: Boolean,
+    onShowAllChange: (Boolean) -> Unit,
     onSelect: (DiscoveredDevice) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // Recognized scales first, then by signal strength.
+    val sorted = devices.sortedWith(
+        compareByDescending<DiscoveredDevice> { it.isLikelyScale }.thenByDescending { it.rssi }
+    )
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             Row(
@@ -324,7 +335,7 @@ private fun DevicePickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Nearby devices",
+                    text = if (showAll) "Nearby devices" else "Nearby scales",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -336,24 +347,57 @@ private fun DevicePickerSheet(
                 Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
-            Spacer(Modifier.height(8.dp))
 
-            if (devices.isEmpty()) {
+            // Escape hatch for a scale that isn't recognized from its advertisement.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onShowAllChange(!showAll) }
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Show all devices", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Off shows only weight scales and named devices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = showAll, onCheckedChange = onShowAllChange)
+            }
+            HorizontalDivider()
+
+            if (sorted.isEmpty()) {
                 Text(
-                    text = if (scanning) "Searching for scales…" else "No devices found.",
+                    text = when {
+                        scanning -> "Searching for scales…"
+                        showAll -> "No devices found."
+                        else -> "No scales found. Step on your scale to wake it, or turn on “Show all devices”."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
                 )
             } else {
                 LazyColumn {
-                    items(devices, key = { it.address }) { device ->
+                    items(sorted, key = { it.address }) { device ->
                         ListItem(
                             headlineContent = { Text(device.name ?: "Unknown device") },
-                            supportingContent = { Text(device.address) },
+                            supportingContent = {
+                                Text(
+                                    if (device.isLikelyScale) "Weight scale · ${device.address}"
+                                    else device.address
+                                )
+                            },
                             trailingContent = { Text("${device.rssi} dBm") },
                             leadingContent = {
-                                Icon(Icons.Filled.Bluetooth, contentDescription = null)
+                                Icon(
+                                    imageVector = if (device.isLikelyScale) Icons.Filled.MonitorWeight else Icons.Filled.Bluetooth,
+                                    contentDescription = null,
+                                    tint = if (device.isLikelyScale) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             },
                             colors = ListItemDefaults.colors(),
                             modifier = Modifier

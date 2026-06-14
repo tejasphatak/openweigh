@@ -101,7 +101,7 @@ class MeasureViewModel @Inject constructor(
             )
         }
         scanJob = viewModelScope.launch {
-            scanner.scan(includeUnfiltered = true)
+            scanner.scan(showAll = _state.value.showAllDevices)
                 .catch { t ->
                     _state.update {
                         it.copy(
@@ -137,6 +137,14 @@ class MeasureViewModel @Inject constructor(
 
     /** User dismissed the device-picker bottom sheet. */
     fun dismissPicker() = stopScan()
+
+    /** Toggle showing all nearby devices vs. only recognized scales + named devices. Restarts scan. */
+    @SuppressLint("MissingPermission")
+    fun setShowAllDevices(show: Boolean) {
+        if (_state.value.showAllDevices == show) return
+        _state.update { it.copy(showAllDevices = show) }
+        if (_state.value.pickerVisible) startScan()
+    }
 
     /** Connect to a chosen device and start streaming readings. */
     @SuppressLint("MissingPermission")
@@ -274,6 +282,7 @@ data class MeasureUiState(
     val bluetoothEnabled: Boolean = false,
     val hasScanPermission: Boolean = false,
     val pickerVisible: Boolean = false,
+    val showAllDevices: Boolean = false,
     val devices: List<DiscoveredDevice> = emptyList(),
     val connectedDeviceName: String? = null,
     val liveReading: ScaleReading? = null,

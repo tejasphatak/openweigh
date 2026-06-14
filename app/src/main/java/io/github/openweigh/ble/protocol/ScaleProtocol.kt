@@ -26,6 +26,21 @@ interface ScaleProtocol {
      */
     fun matches(deviceName: String?, advertisedServices: List<UUID>): Boolean
 
+    /**
+     * @return true if this protocol recognizes a device from its **advertisement** alone (scan
+     * time) — via advertised service UUIDs, the advertised name, and/or manufacturer company IDs.
+     *
+     * Defaults to the service-UUID [matches] check, which recognizes standard SIG scales that
+     * advertise `0x181D`/`0x181B`. Proprietary protocols (e.g. Xiaomi, Yunmai) that do NOT
+     * advertise the standard service UUID should override this to match on a name prefix or
+     * manufacturer company ID so their scales still surface in the device picker.
+     */
+    fun matchesAdvertisement(
+        deviceName: String?,
+        serviceUuids: List<UUID>,
+        manufacturerIds: List<Int>,
+    ): Boolean = matches(deviceName, serviceUuids)
+
     /** @return the GATT characteristic UUIDs this protocol needs notifications/indications from. */
     fun characteristicsToSubscribe(): List<UUID>
 

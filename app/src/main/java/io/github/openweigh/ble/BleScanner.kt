@@ -10,11 +10,9 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.ParcelUuid
 import androidx.annotation.RequiresPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.openweigh.ble.protocol.StandardBodyCompositionProtocol
-import io.github.openweigh.ble.protocol.StandardWeightScaleProtocol
+import io.github.openweigh.ble.protocol.ProtocolRegistry
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,28 +20,42 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** A scale found during a BLE scan. */
+/**
+ * A device found during a BLE scan.
+ *
+ * [isLikelyScale] is true when a registered [io.github.openweigh.ble.protocol.ScaleProtocol]
+ * recognized this device from its advertisement (standard `0x181D`/`0x181B` service, or a
+ * proprietary name/manufacturer match); [matchedProtocolId] names that protocol. The picker uses
+ * these to label and rank scales above generic devices.
+ */
 data class DiscoveredDevice(
     val name: String?,
     val address: String,
-    val rssi: Int
+    val rssi: Int,
+    val serviceUuids: List<UUID> = emptyList(),
+    val isLikelyScale: Boolean = false,
+    val matchedProtocolId: String? = null,
 )
 
 /**
  * Wraps [BluetoothLeScanner] and exposes discovered scales as a cold [Flow].
  *
- * Strategy: a **filtered** scan on the two standard service UUIDs (`0x181D` Weight Scale,
- * `0x181B` Body Composition) so we surface relevant devices first; many scales, however, do NOT
- * advertise their GATT service UUIDs in the advertisement packet, so [scan] also accepts an
- * [includeUnfiltered] fallback that scans everything (the device picker can then show all nearby
- * devices and let the user choose).
+ * BLE scales are inconsistent advertisers: standard ones advertise the Weight Scale (`0x181D`) /
+ * Body Composition (`0x181B`) service UUID, but many proprietary scales (Xiaomi, Yunmai, …) don't
+ * advertise any service UUID and only expose it after connecting. So we scan **unfiltered** at the
+ * radio level and classify each result in software via the [ProtocolRegistry]: a device is a
+ * "likely scale" if any protocol recognizes its advertisement.
  *
- * The returned flow is cold: scanning starts on collection and stops (and the scanner is cleaned
- * up) when the collector cancels.
+ * By default the flow hides nameless/unrecognized devices (the "unknown" flood) and surfaces only
+ * recognized scales plus named devices. Pass `showAll = true` to surface everything as an escape
+ * hatch for an unadvertised scale not yet matched by a protocol.
+ *
+ * The returned flow is cold: scanning starts on collection and stops (scanner cleaned up) on cancel.
  */
 @Singleton
 class BleScanner @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val protocolRegistry: ProtocolRegistry,
 ) {
 
     private val bluetoothManager: BluetoothManager? =
@@ -59,16 +71,14 @@ class BleScanner @Inject constructor(
             hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
 
     /**
-     * Begin scanning for scales. Emits a [DiscoveredDevice] per scan result (deduplicated by
-     * MAC address; later results with a fresher RSSI replace earlier ones).
+     * Begin scanning. Emits a [DiscoveredDevice] per device (deduplicated by MAC address).
      *
-     * @param includeUnfiltered when true, also performs an unfiltered scan to catch scales that
-     * don't advertise their service UUIDs. When false, only devices advertising `0x181D`/`0x181B`
-     * are reported.
+     * @param showAll when false (default), only recognized scales and named devices are reported,
+     * hiding the nameless "unknown" devices. When true, every nearby device is reported.
      */
     @SuppressLint("MissingPermission")
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT])
-    fun scan(includeUnfiltered: Boolean = true): Flow<DiscoveredDevice> = callbackFlow {
+    fun scan(showAll: Boolean = false): Flow<DiscoveredDevice> = callbackFlow {
         val scanner: BluetoothLeScanner? = bluetoothManager?.adapter?.bluetoothLeScanner
         if (scanner == null) {
             close(IllegalStateException("Bluetooth LE scanner unavailable (adapter off or absent)"))
@@ -93,11 +103,32 @@ class BleScanner @Inject constructor(
             private fun emit(result: ScanResult) {
                 val device = result.device ?: return
                 val address = device.address ?: return
-                // De-dup by address but always forward (UI can update rssi); keep it simple:
-                // only forward the first sighting to avoid flooding the picker.
+                val scanRecord = result.scanRecord
+                val name = scanRecord?.deviceName ?: runCatching { device.name }.getOrNull()
+                val serviceUuids = scanRecord?.serviceUuids?.map { it.uuid }.orEmpty()
+                val manufacturerIds = manufacturerCompanyIds(result)
+
+                val matchedId = protocolRegistry.recognize(name, serviceUuids, manufacturerIds)
+                val likelyScale = matchedId != null
+
+                // Hide the nameless/unrecognized "unknown" flood unless the user asked for all.
+                if (!showAll && !likelyScale && name.isNullOrBlank()) return
+
+                // Forward the first sighting only (avoid flooding the picker). Not adding to `seen`
+                // until we actually forward means a device that first appears nameless can still be
+                // surfaced once it advertises a name / is recognized.
                 if (!seen.add(address)) return
-                val name = result.scanRecord?.deviceName ?: runCatching { device.name }.getOrNull()
-                trySend(DiscoveredDevice(name = name, address = address, rssi = result.rssi))
+
+                trySend(
+                    DiscoveredDevice(
+                        name = name,
+                        address = address,
+                        rssi = result.rssi,
+                        serviceUuids = serviceUuids,
+                        isLikelyScale = likelyScale,
+                        matchedProtocolId = matchedId,
+                    )
+                )
             }
         }
 
@@ -105,16 +136,10 @@ class BleScanner @Inject constructor(
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
-        val filters: List<ScanFilter> = if (includeUnfiltered) {
-            // Empty filter list = scan everything. We still bias discovery toward scales by
-            // surfacing service-matching devices, but accept all so unadvertised scales appear.
-            emptyList()
-        } else {
-            SERVICE_FILTERS
-        }
-
+        // Empty filter list = scan everything; classification/filtering happens in software so that
+        // proprietary scales (which don't advertise a service UUID) still appear.
         runCatching {
-            scanner.startScan(filters, settings, callback)
+            scanner.startScan(emptyList<ScanFilter>(), settings, callback)
         }.onFailure { close(it); return@callbackFlow }
 
         awaitClose {
@@ -122,16 +147,12 @@ class BleScanner @Inject constructor(
         }
     }
 
+    /** Company IDs from the advertisement's manufacturer-specific data (used for proprietary matching). */
+    private fun manufacturerCompanyIds(result: ScanResult): List<Int> {
+        val msd = result.scanRecord?.manufacturerSpecificData ?: return emptyList()
+        return buildList { for (i in 0 until msd.size()) add(msd.keyAt(i)) }
+    }
+
     private fun hasPermission(permission: String): Boolean =
         context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
-
-    companion object {
-        private val WEIGHT_SCALE_UUID: UUID = StandardWeightScaleProtocol.WEIGHT_SCALE_SERVICE
-        private val BODY_COMPOSITION_UUID: UUID = StandardBodyCompositionProtocol.BODY_COMPOSITION_SERVICE
-
-        private val SERVICE_FILTERS: List<ScanFilter> = listOf(
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(WEIGHT_SCALE_UUID)).build(),
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(BODY_COMPOSITION_UUID)).build()
-        )
-    }
 }

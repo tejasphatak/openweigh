@@ -21,6 +21,19 @@ class ProtocolRegistry @Inject constructor(
     fun resolve(deviceName: String?, services: List<UUID>): ScaleProtocol? =
         ordered.firstOrNull { it.matches(deviceName, services) }
 
+    /**
+     * @return the id of the first protocol that recognizes the device from its advertisement
+     * (scan time), or null if none do. Used by the scanner to flag likely scales and filter the
+     * device picker.
+     */
+    fun recognize(
+        deviceName: String?,
+        serviceUuids: List<UUID>,
+        manufacturerIds: List<Int>,
+    ): String? = ordered.firstOrNull {
+        it.matchesAdvertisement(deviceName, serviceUuids, manufacturerIds)
+    }?.id
+
     /** All registered protocols, in resolution order. */
     fun all(): List<ScaleProtocol> = ordered
 }
